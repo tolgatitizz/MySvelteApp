@@ -3,52 +3,18 @@
   import TodoItem from '$lib/TodoItem.svelte';
   import Counter from '$lib/Counter.svelte';
 
-  import type { PageData } from './$types'; // Bu satır önemli!
-  export let data: PageData; // data prop'una PageData tipini atayın
-
-  let todos = data.todos;
-
-  type Todo = {
-    id: string;
-    text: string;
-    completed: boolean;
-  };
+  import type { PageData } from './$types';
+  export let data: PageData;
 
   let newTodoText: string = '';
 
-  function addTodo() {
-    if (newTodoText.trim() === '') {
-      return;
-    }
-    todos = [...todos, { id: uuidv4(), text: newTodoText, completed: false }];
-    newTodoText = '';
-  }
-
-  function toggleTodo(event: CustomEvent<{ id: string }>) {
-    const todoId = event.detail.id;
-    todos = todos.map(todo =>
-      todo.id === todoId ? { ...todo, completed: !todo.completed } : todo
-    );
-  }
-
-  function clearCompletedTodos() {
-    todos = todos.filter(todo => !todo.completed);
-  }
-
-  // Tarih formatlama için yardımcı fonksiyon
   function formatDate(dateString: string): string {
     const date = new Date(dateString);
     return date.toLocaleDateString('tr-TR', { weekday: 'long', day: 'numeric', month: 'long' });
   }
 
-  // Meteoblue ikon URL'si oluşturma (pictocode'a göre)
-  // Bu, meteoblue'nun varsayılan ikonlarını kullanır
   function getMeteoblueIconUrl(pictocode: number): string {
-      // Meteoblue ikonlarının bulunduğu standart bir URL formatı
-      // Burada 2x (retina) versiyonunu kullanıyoruz
-      // Lütfen bu URL'nin geçerliliğini Meteoblue dokümantasyonundan kontrol edin.
-      // Eğer çalışmazsa, kendi ikon setinizi kullanmanız gerekebilir.
-      return `https://www.meteoblue.com/assets/images/icons/weather_icons/alpha/${pictocode}.svg`;
+    return `https://www.meteoblue.com/assets/images/icons/weather_icons/alpha/${pictocode}.svg`;
   }
 </script>
 
@@ -102,38 +68,80 @@
     <h2 class="text-3xl font-extrabold text-gray-900 mb-6 text-center">
       Yapılacaklar Listem
     </h2>
-    <form on:submit|preventDefault={addTodo} class="flex mb-6 space-x-2">
+    <form method="POST" action="?/addTodo" class="flex mb-6 space-x-2">
       <input
         type="text"
         placeholder="Yeni bir yapılacak ekle..."
         bind:value={newTodoText}
-        class="flex-grow p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+        name="newTodoText"
+        class="flex-grow p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500
+               text-lg"
       />
       <button
         type="submit"
-        class="px-5 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition duration-300"
+        class="px-5 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition duration-300
+               shadow-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
       >
         Ekle
       </button>
     </form>
 
-    <div class="space-y-3">
-      {#each todos as todo (todo.id)}
-        <TodoItem
-          id={todo.id}
-          text={todo.text}
-          completed={todo.completed}
-          on:toggle={toggleTodo} />
-      {/each}
+    <div class="prose max-w-none">
+      {#if data.todos.length === 0}
+        <p class="text-center text-gray-500 italic py-4">Henüz yapılacak bir görev yok!</p>
+      {:else}
+        <ul class="list-none p-0 space-y-3">
+          {#each data.todos as todo (todo.id)}
+            <li class="relative">
+              <form method="POST" action="?/toggleTodo" class="flex items-center">
+                <input type="hidden" name="id" value={todo.id} />
+                <input
+                  type="checkbox"
+                  id={`todo-${todo.id}`}
+                  checked={todo.completed}
+                  on:change={() => { /* Form gönderilecek, on:change'e gerek yok */ }}
+                  class="form-checkbox h-5 w-5 text-blue-600 rounded mr-3"
+                  name="completed"
+                  on:click={(e) => (e.target as HTMLInputElement).form?.requestSubmit()}
+                />
+                <label
+                  for={`todo-${todo.id}`}
+                  class="flex-grow text-lg cursor-pointer select-none
+                         {todo.completed ? 'line-through text-gray-500 italic' : 'text-gray-800 font-medium'}
+                         transition-all duration-200 ease-in-out"
+                >
+                  {todo.text}
+                </label>
+              </form>
+              <form method="POST" action="?/deleteTodo" class="absolute right-0 top-0 bottom-0 flex items-center pr-2">
+                <input type="hidden" name="id" value={todo.id} />
+                <button
+                  type="submit"
+                  class="p-1 rounded-full text-red-500 hover:bg-red-100 hover:text-red-700
+                         focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2
+                         transition-colors duration-200 ease-in-out"
+                  aria-label="Yapılacak görevi sil" >
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                    <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
+                  </svg>
+                </button>
+              </form>
+            </li>
+          {/each}
+        </ul>
+      {/if}
     </div>
 
-    {#if todos.length > 0}
-      <button
-        on:click={clearCompletedTodos}
-        class="mt-6 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition duration-300 w-full"
-      >
-        Bitirilenleri Temizle
-      </button>
+    {#if data.todos.length > 0}
+      <form method="POST" action="?/clearCompleted" class="mt-6">
+        <button
+          type="submit"
+          class="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition duration-300 w-full
+                 shadow-md focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2"
+        >
+          Bitirilenleri Temizle
+        </button>
+      </form>
     {/if}
   </div>
 </div>

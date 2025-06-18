@@ -1,3 +1,11 @@
+/* src/app.css */
+
 @import 'tailwindcss';
+
 @plugin '@tailwindcss/forms';
 @plugin '@tailwindcss/typography';
+
+/* tailwind.config.js dosyanızın yolunu src klasöründen bir üst seviyeye göre ayarlayın */
+@config "../tailwind.config.js"; /* Buradaki yolu değiştirdik! */
+
+/* Kendi özel CSS'iniz buraya gelecek */

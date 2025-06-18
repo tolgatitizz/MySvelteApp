@@ -1,46 +1,41 @@
 <script lang="ts">
-  // Bu bileşen, dışarıdan veri alacak.
-  // Bu verilere "props" denir.
-  // `export let` kullanarak bir prop tanımlarız.
-  // Dışarıdan gelecek her veri için bir `export let` satırı yazarız.
-
-  export let id: string; // Her yapılacak öğesinin benzersiz bir kimliği (string tipinde)
-  export let text: string; // Yapılacak öğesinin metni (string tipinde)
-  export let completed: boolean; // Yapılacak öğesinin tamamlandı durumu (true/false, boolean tipinde)
-
-  // Bu bileşenden dışarıya bir olay gönderebiliriz.
-  // Bu olaya "custom event" (özel olay) denir.
-  // `createEventDispatcher` fonksiyonu ile olay gönderme fonksiyonu oluştururuz.
-  import { createEventDispatcher } from 'svelte';
-  const dispatch = createEventDispatcher();
-
-  // Bir yapılacak öğesinin tamamlandı durumunu değiştirmek için bir fonksiyon
-  function toggleCompleted() {
-    // "toggle" adında özel bir olay gönderiyoruz.
-    // Bu olayı dinleyen ana bileşen (bizim durumumuzda +page.svelte),
-    // hangi öğenin durumunun değiştiğini anlamak için 'id' bilgisini de gönderiyoruz.
-    dispatch('toggle', { id });
-  }
+  // Artık dispatch veya toggleCompleted/handleDelete fonksiyonlarına gerek yok,
+  // çünkü bu işlemler +page.svelte'deki formlar tarafından tetiklenecek.
+  export let id: string;
+  export let text: string;
+  export let completed: boolean;
 </script>
 
 <div
-  class="flex items-center p-3 border rounded-lg shadow-sm mb-2
-         {completed ? 'bg-green-100 border-green-300' : 'bg-gray-50 border-gray-200'}">
-
+  class="
+    flex items-center p-3 border rounded-lg shadow-md mb-2 transition-all duration-300 ease-in-out
+    {completed ? 'bg-green-50 border-green-200' : 'bg-white border-gray-200'}
+  "
+>
   <input
     type="checkbox"
-    id={`todo-${id}`} bind:checked={completed} on:change={toggleCompleted} class="form-checkbox h-5 w-5 text-blue-600 rounded"
-  />
+    id={`todo-${id}`}
+    checked={completed}
+    class="
+      form-checkbox h-5 w-5 text-blue-600 rounded
+      focus:ring-blue-500 focus:ring-offset-2
+      transition-colors duration-200 ease-in-out
+      mr-3 "
+    disabled />
 
   <label
     for={`todo-${id}`}
-    class="ml-3 text-lg flex-grow 
-           {completed ? 'line-through text-gray-500' : 'text-gray-800'}">
-    {text} </label>
-</div>
+    class="
+      flex-grow text-lg cursor-pointer select-none
+      {completed ? 'line-through text-gray-500 italic' : 'text-gray-800 font-medium'}
+      transition-all duration-200 ease-in-out
+    "
+  >
+    {text}
+  </label>
+
+  </div>
 
 <style>
-  /* Bu `<style>` bloğu sadece bu `TodoItem.svelte` bileşenini etkiler.
-     Diğer sayfalara veya bileşenlere bulaşmaz, bu da CSS yönetimini kolaylaştırır. */
-  /* `form-checkbox` gibi sınıflar Tailwind CSS'in forms eklentisinden gelir. */
+  /* Buraya özel stil kalıntıları varsa temizlenebilir */
 </style>
